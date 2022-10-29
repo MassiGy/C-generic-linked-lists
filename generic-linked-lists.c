@@ -1,0 +1,112 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+
+struct Node
+{
+    void *data;
+    size_t data_size;
+    struct Node *next;
+};
+
+typedef struct Node glist_t;
+
+/*CRUD OPERATIONS */
+void push_glist(glist_t **head, void *val, size_t val_size);
+void destroy_glist(glist_t **head);
+
+/* COPY OPERATIONS */
+glist_t *copy_glist(glist_t **src);
+
+int main(void)
+{
+    glist_t *head = NULL;
+    glist_t *head_copy = NULL;
+    char buffer[20];
+    strcpy(buffer, "hello");
+
+    int num[1];
+    num[0] = 1;
+
+    push_glist(&head, (void *)buffer, 20 * sizeof(char));
+    push_glist(&head, (void *)num, 1 * sizeof(int));
+
+    copy_glist(&head_copy, &head);
+    assert(head_copy != NULL);
+
+    printf("the first value is %s\n", (char *)(head_copy->data));
+    assert(head_copy->next != NULL);
+    printf("the second value is %i\n", *((int *)(head_copy->next->data)));
+
+    destroy_glist(&head);
+    destroy_glist(&head_copy);
+
+    return 0;
+}
+
+void push_glist(glist_t **head, void *val, size_t val_size)
+{
+    assert(head != NULL);
+
+    if (*head == NULL)
+    {
+        *head = malloc(sizeof(glist_t));
+        assert(*head != NULL);
+
+        (*head)->data = val;
+        (*head)->data_size = val_size;
+        (*head)->next = NULL;
+    }
+    else
+    {
+        glist_t *temp = *head;
+
+        while (temp->next != NULL)
+        {
+            /* code */
+            temp = temp->next;
+        }
+
+        temp->next = malloc(sizeof(glist_t));
+        assert(temp != NULL);
+
+        temp->next->data = val;
+        temp->next->data_size = val_size;
+        temp->next->next = NULL;
+    }
+}
+
+/*
+    Note: in the destroy function we can not free the data pointers since they are void *
+    Also, since they are declared staticly (on the stack), no need to free them.
+
+    If, you consider declaring them dynamicly ( with malloc), a hint can be to cast them as char *
+*/
+void destroy_glist(glist_t **head)
+{
+    assert(head != NULL);
+    assert(*head != NULL);
+
+    glist_t *temp = (*head);
+
+    while (temp->next != NULL)
+    {
+        temp = temp->next;
+        free(*head);
+        *head = temp;
+    }
+
+    free(*head);
+    *head = NULL;
+    temp = NULL;
+}
+
+glist_t *copy_glist(glist_t **src)
+{
+    assert(src != NULL);
+    assert(*src != NULL);
+
+    
+
+}
