@@ -34,6 +34,7 @@ int main(void)
     push_glist(&head, (void *)num, 1 * sizeof(int));
 
     copy_glist(&head_copy, &head);
+    
 
     printf("the first value is %s\n", (char *)(head_copy->data));
     assert(head_copy->next != NULL);
@@ -140,5 +141,7 @@ void copy_glist(glist_t **dest, glist_t **src)
         current = current->next;
         traversal = traversal->next;
     }
+
+    printf("after the loop");
 
 }
