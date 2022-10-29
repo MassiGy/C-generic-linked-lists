@@ -17,12 +17,13 @@ void push_glist(glist_t **head, void *val, size_t val_size);
 void destroy_glist(glist_t **head);
 
 /* COPY OPERATIONS */
-glist_t *copy_glist(glist_t **src);
+void copy_glist(glist_t **dest, glist_t **src);
 
 int main(void)
 {
     glist_t *head = NULL;
     glist_t *head_copy = NULL;
+
     char buffer[20];
     strcpy(buffer, "hello");
 
@@ -33,7 +34,6 @@ int main(void)
     push_glist(&head, (void *)num, 1 * sizeof(int));
 
     copy_glist(&head_copy, &head);
-    assert(head_copy != NULL);
 
     printf("the first value is %s\n", (char *)(head_copy->data));
     assert(head_copy->next != NULL);
@@ -102,11 +102,43 @@ void destroy_glist(glist_t **head)
     temp = NULL;
 }
 
-glist_t *copy_glist(glist_t **src)
+void copy_glist(glist_t **dest, glist_t **src)
 {
     assert(src != NULL);
     assert(*src != NULL);
 
-    
+    assert(dest != NULL);
+
+    glist_t *traversal = *src;
+    glist_t *current = *dest;
+
+    if (current == NULL)
+    {
+        current = malloc(sizeof(glist_t));
+
+        current->data = traversal->data;
+        current->data_size = traversal->data_size;
+
+        memcpy(current->data, traversal->data, traversal->data_size);
+
+        current->next = NULL;
+
+        traversal = traversal->next;
+    }
+
+    while (traversal != NULL)
+    {
+        current->next = malloc(sizeof(glist_t));
+
+        current->next->data = traversal->data;
+        current->next->data_size = traversal->data_size;
+
+        memcpy(current->next->data, traversal->data, traversal->data_size);
+        
+        current->next->next = NULL;
+
+        current = current->next;
+        traversal = traversal->next;
+    }
 
 }
