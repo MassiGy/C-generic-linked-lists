@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <assert.h>
 
@@ -20,7 +21,14 @@ void destroy_glist(glist_t **head);
 /** COPY OPERATIONS */
 glist_t *copy_glist(glist_t *head);
 
-/** */
+/** SWAP OPERATIONS */
+void swap_glist(glist_t **head, int first_pos, int second_pos);
+
+/** SORTING OPERATIONS */
+void bubble_sort_glist(glist_t **head, int length, int (*cmp)(void *first, void *second), void (*swap)(glist_t *first, glist_t *second));
+
+/** HELPERS */
+void swap_glist_str(glist_t *first, glist_t *second);
 
 /** TO DEBUG*/
 // void copy_glist(glist_t **dest, glist_t **src); // does not work
@@ -28,30 +36,29 @@ glist_t *copy_glist(glist_t *head);
 int main(void)
 {
     glist_t *head = NULL;
-    // glist_t *head_copy = NULL;
 
     char buffer[20];
-    strcpy(buffer, "hello");
 
-    int num[1];
-    num[0] = 1;
-
+    strcpy(buffer, "world !");
     push_glist(&head, (void *)buffer, 20 * sizeof(char));
-    push_glist(&head, (void *)num, 1 * sizeof(int));
 
-    // head_copy = copy_glist(head);
+    strcpy(buffer, "there,");
+    push_glist(&head, (void *)buffer, 20 * sizeof(char));
+
+    strcpy(buffer, "hello ");
+    push_glist(&head, (void *)buffer, 20 * sizeof(char));
 
     printf("the first value is %s\n", (char *)(head->data));
-    printf("the second value is %i\n", *((int *)(head->next->data)));
+    printf("the second value is %s\n", ((char *)(head->next->data)));
+    printf("the third value is %s\n", ((char *)(head->next->next->data)));
 
-    updateAt(&head, 0, (void *)&num, 1 * sizeof(int));
+    bubble_sort_glist(&head, 3, &strcmp, &swap_glist_str);
 
-    printf("the first value is %i\n", *(int *)(head->data));
-    printf("the second value is %s\n", ((char*)(head->next->data)));
-    printf("the third value is %i\n", *((int *)(head->next->next->data)));
+    printf("the first value is %s\n", (char *)(head->data));
+    printf("the second value is %s\n", ((char *)(head->next->data)));
+    printf("the third value is %s\n", ((char *)(head->next->next->data)));
 
     destroy_glist(&head);
-    // destroy_glist(&head_copy);
 
     return 0;
 }
@@ -173,7 +180,7 @@ void updateAt(glist_t **head, int pos, void *val, size_t val_size)
     assert(*head != NULL);
     assert(pos >= 0);
 
-    if (pos == 0)
+    if (pos == -1)
     {
         // insert at the beginning
         glist_t *temp = malloc(sizeof(glist_t));
@@ -195,7 +202,6 @@ void updateAt(glist_t **head, int pos, void *val, size_t val_size)
 
     int counter = 0;
     glist_t *traversal = *head;
-
 
     while (counter < pos && traversal->next != NULL)
     {
@@ -244,15 +250,145 @@ void updateAt(glist_t **head, int pos, void *val, size_t val_size)
     }
 }
 
+void swap_glist(glist_t **head, int first_pos, int second_pos)
+{
+    assert(head != NULL);
+    assert(*head != NULL);
 
+    assert(first_pos >= 0);
+    assert(second_pos >= 0);
+    assert(first_pos < second_pos);
 
+    glist_t *traversal = *head;
+    glist_t *first;
+    glist_t *second;
+    int counter = 0;
 
+    while (counter < second_pos && traversal != NULL)
+    {
+        /* code */
+        if (counter == first_pos)
+        {
+            first = traversal;
+        }
+        counter++;
+        traversal = traversal->next;
+    }
 
+    // assert that second pos < len, cuz if second pos > len there is no element to swap
+    assert(traversal != NULL);
 
+    // now counter == second pos
+    second = traversal;
 
+    // swap them;
 
+    // temp will store the data of the second
+    glist_t *temp = malloc(sizeof(glist_t));
+    assert(temp != NULL);
 
+    temp->data_size = second->data_size;
 
+    temp->data = malloc(second->data_size * sizeof(char));
+    assert(temp->data != NULL);
+
+    memcpy(temp->data, second->data, second->data_size);
+
+    // copy the data of the first to the second;
+
+    free(second->data); // destroy the old data;
+
+    second->data_size = first->data_size;
+
+    second->data = malloc(first->data_size * sizeof(char));
+    assert(second->data != NULL);
+
+    memcpy(second->data, first->data, first->data_size);
+
+    // copy the data from temp to first;
+
+    free(first->data); // destroy old data;
+
+    first->data_size = temp->data_size;
+
+    first->data = malloc(temp->data_size * sizeof(char));
+    assert(first->data != NULL);
+
+    memcpy(first->data, temp->data, temp->data_size);
+
+    // destroy temp;
+    free(temp->data);
+    free(temp);
+
+    return;
+}
+
+void bubble_sort_glist(glist_t **head, int length, int (*cmp)(void *first, void *second), void (*swap)(glist_t *first, glist_t *second))
+{
+    assert(head != NULL);
+    assert(*head != NULL);
+    assert(length > 0);
+    assert(cmp != NULL);
+    assert(swap != NULL);
+
+    int i = 0;
+    glist_t *swap_pointer;
+    bool swaps = true;
+
+    while (i < length - 1 && swaps)
+    {
+
+        swaps = false;
+        int j = 0;
+        swap_pointer = *head;
+
+        while (j < length - i - 1 && swap_pointer->next != NULL)
+        {
+            if ((*cmp)(swap_pointer->data, swap_pointer->next->data) > 0)
+            {
+                (*swap)(swap_pointer, swap_pointer->next);
+                swaps = true;
+            }
+            swap_pointer = swap_pointer->next;
+            j++;
+        }
+        i++;
+    }
+}
+
+void swap_glist_str(glist_t *first, glist_t *second)
+{
+    assert(first != NULL);
+    assert(second != NULL);
+
+    // we know that first->data and second->data are char *
+
+    // store the second data
+    char buffer[second->data_size];
+    strcpy(buffer, (char *)second->data);
+
+    // copy first to second
+    free(second->data);
+
+    second->data_size = first->data_size;
+
+    second->data = malloc(first->data_size * sizeof(char));
+    assert(second->data != NULL);
+
+    strcpy((char *)second->data, (char *)first->data); // this will copy logically, copies till the \0
+
+    // copy the buffer to the first
+    free(first->data);
+
+    first->data_size = strlen(buffer) + 1; // strlen gives the logical length of buffer and it does not count \0
+
+    first->data = malloc((strlen(buffer) + 1) * sizeof(char));
+    assert(first->data != NULL);
+
+    strcpy(first->data, buffer);
+
+    ((char *)first->data)[strlen(buffer)] = '\0';
+}
 
 /** TO DEBUG*/
 
