@@ -14,10 +14,13 @@ typedef struct Node glist_t;
 
 /** CRUD OPERATIONS */
 void push_glist(glist_t **head, void *val, size_t val_size);
+void updateAt(glist_t **head, int pos, void *val, size_t val_size);
 void destroy_glist(glist_t **head);
 
 /** COPY OPERATIONS */
 glist_t *copy_glist(glist_t *head);
+
+/** */
 
 /** TO DEBUG*/
 // void copy_glist(glist_t **dest, glist_t **src); // does not work
@@ -25,7 +28,7 @@ glist_t *copy_glist(glist_t *head);
 int main(void)
 {
     glist_t *head = NULL;
-    glist_t *head_copy = NULL;
+    // glist_t *head_copy = NULL;
 
     char buffer[20];
     strcpy(buffer, "hello");
@@ -36,13 +39,19 @@ int main(void)
     push_glist(&head, (void *)buffer, 20 * sizeof(char));
     push_glist(&head, (void *)num, 1 * sizeof(int));
 
-    head_copy = copy_glist(head);
+    // head_copy = copy_glist(head);
 
-    printf("the first value is %s\n", (char *)(head_copy->data));
-    printf("the second value is %i\n", *((int *)(head_copy->next->data)));
+    printf("the first value is %s\n", (char *)(head->data));
+    printf("the second value is %i\n", *((int *)(head->next->data)));
+
+    updateAt(&head, 0, (void *)&num, 1 * sizeof(int));
+
+    printf("the first value is %i\n", *(int *)(head->data));
+    printf("the second value is %s\n", ((char*)(head->next->data)));
+    printf("the third value is %i\n", *((int *)(head->next->next->data)));
 
     destroy_glist(&head);
-    destroy_glist(&head_copy);
+    // destroy_glist(&head_copy);
 
     return 0;
 }
@@ -56,7 +65,11 @@ void push_glist(glist_t **head, void *val, size_t val_size)
         *head = malloc(sizeof(glist_t));
         assert(*head != NULL);
 
-        (*head)->data = val;
+        (*head)->data = malloc(val_size * sizeof(char));
+        assert((*head)->data != NULL);
+
+        memcpy((*head)->data, val, val_size);
+
         (*head)->data_size = val_size;
         (*head)->next = NULL;
     }
@@ -71,20 +84,20 @@ void push_glist(glist_t **head, void *val, size_t val_size)
         }
 
         temp->next = malloc(sizeof(glist_t));
-        assert(temp != NULL);
+        assert(temp->next != NULL);
 
-        temp->next->data = val;
-        temp->next->data_size = val_size;
-        temp->next->next = NULL;
+        temp = temp->next;
+
+        temp->data = malloc(val_size * sizeof(char));
+        assert(temp->data != NULL);
+
+        memcpy(temp->data, val, val_size);
+
+        temp->data_size = val_size;
+        temp->next = NULL;
     }
 }
 
-/*
-    Note: in the destroy function we can not free the data pointers since they are void *
-    Also, since they are declared staticly (on the stack), no need to free them.
-
-    If, you consider declaring them dynamicly ( with malloc), a hint can be to cast them as char *
-*/
 void destroy_glist(glist_t **head)
 {
     assert(head != NULL);
@@ -94,12 +107,21 @@ void destroy_glist(glist_t **head)
 
     while (temp->next != NULL)
     {
+        // point to the next element starting from the head
         temp = temp->next;
+
+        // free the head node
+        free((*head)->data);
         free(*head);
+
+        // make the head point to its next
         *head = temp;
     }
 
+    free((*head)->data);
     free(*head);
+
+    // set pointers to null to avoid illegal derefrenciations
     *head = NULL;
     temp = NULL;
 }
@@ -126,10 +148,12 @@ glist_t *copy_glist(glist_t *head)
 
         current = current->next;
 
-        current->data = traversal->data;
-        current->data_size = traversal->data_size;
+        current->data = malloc(traversal->data_size * sizeof(char));
+        assert(current->data != NULL);
 
         memcpy(current->data, traversal->data, traversal->data_size);
+
+        current->data_size = traversal->data_size;
 
         traversal = traversal->next;
     }
@@ -137,11 +161,93 @@ glist_t *copy_glist(glist_t *head)
     // remove the first element;
 
     current = resault->next;
-    free(resault);
+    free(resault); // WARNING: we do not free the resault->data since we've never allocated it.
     resault = current;
 
     return resault;
 }
+
+void updateAt(glist_t **head, int pos, void *val, size_t val_size)
+{
+    assert(head != NULL);
+    assert(*head != NULL);
+    assert(pos >= 0);
+
+    if (pos == 0)
+    {
+        // insert at the beginning
+        glist_t *temp = malloc(sizeof(glist_t));
+        assert(temp != NULL);
+
+        temp->data_size = val_size;
+
+        temp->data = malloc(val_size * sizeof(char));
+        assert(temp->data != NULL);
+
+        memcpy(temp->data, val, val_size);
+
+        temp->next = *head;
+
+        *head = temp;
+
+        return;
+    }
+
+    int counter = 0;
+    glist_t *traversal = *head;
+
+
+    while (counter < pos && traversal->next != NULL)
+    {
+        /* code */
+        traversal = traversal->next;
+        counter++;
+    }
+
+    // if pos < length
+    if (counter == pos)
+    {
+
+        // free the old data;
+        free(traversal->data);
+
+        // create the new data container
+        traversal->data = malloc(val_size * sizeof(char));
+        assert(traversal->data != NULL);
+
+        traversal->data_size = val_size;
+
+        memcpy(traversal->data, val, val_size);
+
+        return;
+    }
+
+    // if pos > length
+    if (traversal->next == NULL && counter != pos)
+    {
+
+        traversal->next = malloc(sizeof(glist_t));
+        assert(traversal->next != NULL);
+
+        traversal = traversal->next;
+
+        traversal->data_size = val_size;
+
+        traversal->data = malloc(val_size * sizeof(char));
+        assert(traversal->data != NULL);
+
+        memcpy(traversal->data, val, val_size);
+
+        traversal->next = NULL;
+
+        return;
+    }
+}
+
+
+
+
+
 
 
 
