@@ -293,6 +293,12 @@ void bubble_sort_glist(glist_t **head, int length, int (*cmp)(void *first, void 
     }
 }
 
+/** HELPERS */
+
+/*
+    This will swap two nodes of the generic linked list
+    assuming that they contain strings pointers as data
+*/
 void swap_glist_str(glist_t *first, glist_t *second)
 {
     assert(first != NULL);
