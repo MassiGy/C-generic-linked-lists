@@ -12,12 +12,15 @@ struct Node
 
 typedef struct Node glist_t;
 
-/*CRUD OPERATIONS */
+/** CRUD OPERATIONS */
 void push_glist(glist_t **head, void *val, size_t val_size);
 void destroy_glist(glist_t **head);
 
-/* COPY OPERATIONS */
-void copy_glist(glist_t **dest, glist_t **src);
+/** COPY OPERATIONS */
+glist_t *copy_glist(glist_t *head);
+
+/** TO DEBUG*/
+// void copy_glist(glist_t **dest, glist_t **src); // does not work
 
 int main(void)
 {
@@ -33,11 +36,9 @@ int main(void)
     push_glist(&head, (void *)buffer, 20 * sizeof(char));
     push_glist(&head, (void *)num, 1 * sizeof(int));
 
-    copy_glist(&head_copy, &head);
-    
+    head_copy = copy_glist(head);
 
     printf("the first value is %s\n", (char *)(head_copy->data));
-    assert(head_copy->next != NULL);
     printf("the second value is %i\n", *((int *)(head_copy->next->data)));
 
     destroy_glist(&head);
@@ -103,6 +104,54 @@ void destroy_glist(glist_t **head)
     temp = NULL;
 }
 
+glist_t *copy_glist(glist_t *head)
+{
+    assert(head != NULL);
+
+    glist_t *resault;
+    glist_t *traversal = head;
+
+    // create the resault copy with one more element at the beginning
+    glist_t *current = malloc(sizeof(glist_t));
+    assert(current != NULL);
+
+    // make resault points to this first element;
+    resault = current;
+
+    while (traversal != NULL)
+    {
+        /* code */
+        current->next = malloc(sizeof(glist_t));
+        assert(current->next != NULL);
+
+        current = current->next;
+
+        current->data = traversal->data;
+        current->data_size = traversal->data_size;
+
+        memcpy(current->data, traversal->data, traversal->data_size);
+
+        traversal = traversal->next;
+    }
+
+    // remove the first element;
+
+    current = resault->next;
+    free(resault);
+    resault = current;
+
+    return resault;
+}
+
+
+
+
+
+
+/** TO DEBUG*/
+
+/*
+
 void copy_glist(glist_t **dest, glist_t **src)
 {
     assert(src != NULL);
@@ -135,13 +184,11 @@ void copy_glist(glist_t **dest, glist_t **src)
         current->next->data_size = traversal->data_size;
 
         memcpy(current->next->data, traversal->data, traversal->data_size);
-        
+
         current->next->next = NULL;
 
         current = current->next;
         traversal = traversal->next;
     }
-
-    printf("after the loop");
-
 }
+*/
