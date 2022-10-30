@@ -21,6 +21,8 @@ int main(void)
 
     bubble_sort_glist(&head, 3, &strcmp, &swap_glist_str);
 
+    printf("\n\n after sorting the generic linked list \n\n");
+
     printf("the first value is %s\n", (char *)(head->data));
     printf("the second value is %s\n", ((char *)(head->next->data)));
     printf("the third value is %s\n", ((char *)(head->next->next->data)));
